@@ -347,9 +347,53 @@ class RequestsPage:
             done_button.pack(side="right")
 
     def mark_as_done(self, request):
-        # Implement functionality to mark the request as done
-        # For example, you can remove the request from the database or update its status
-        print(f"Request marked as done: {request}")
+        try:
+            # Connect to the database
+            db = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="Libratech@24",
+            database="reserved_books")
+            cursor = db.cursor()
+
+            # Delete the row from the database
+            sql = "DELETE FROM reserved_books.reserved_books WHERE regdno = %s AND book = %s AND author = %s"
+            values = (request[0], request[1], request[2])
+            cursor.execute(sql, values)
+            db.commit()
+            
+            # Close the database connection
+            cursor.close()
+            db.close()
+
+            # Remove the request from GUI
+            self.remove_request_from_gui(request)
+
+        except mysql.connector.Error as error:
+            print("Error:", error)
+    def display_requests(self):
+        # Display each request in a single line with a "Done" button
+        for request in self.reserved_books_data:
+            request_frame = tk.Frame(self.frame)
+            request_frame.pack(pady=5, fill="x")
+
+            # Display request information (registration number, book, author) in a single line
+            request_info = f"Registration Number: {request[0]}, Book: {request[1]}, Author: {request[2]}"
+            request_label = tk.Label(request_frame, text=request_info)
+            request_label.pack(side="left")
+
+            # Create "Done" button for each request
+            done_button = tk.Button(request_frame, text="Done", command=lambda req=request: self.mark_as_done(req))
+            done_button.pack(side="right")
+
+    def remove_request_from_gui(self, request):
+        # Remove the request from GUI
+        for widget in self.frame.winfo_children():
+            request_info = f"Registration Number: {request[0]}, Book: {request[1]}, Author: {request[2]}"
+            if widget.winfo_class() == "Frame" and widget.winfo_children()[0]["text"] == request_info:
+                widget.destroy()
+                break
+
 
 class SignUpPage:
     def __init__(self, master, login_master, db, cursor):
