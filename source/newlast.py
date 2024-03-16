@@ -1,6 +1,6 @@
 
 import tkinter as tk
-from tkinter import PhotoImage, messagebox
+from tkinter import messagebox
 from tkinter import simpledialog
 import mysql.connector
 import re
@@ -9,70 +9,136 @@ from PIL import Image, ImageTk
 class IntroductionPage:
     def __init__(self, master, db, cursor):
         self.master = master
-        self.db = db  # Save the database connection
+        self.db = db  
         self.cursor = cursor
         master.title("Welcome to Our Application")
-        master.geometry("1300x700")  # Initial size of the window
+        master.geometry("1300x700") 
         master.resizable(False, False)
-        master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
-
-        """self.image = Image.open("assets/intoduction.png")
-        self.image = self.image.resize((50, 50), Image.BILINEAR)  # Resize the image
-        self.image_label = ImageTk.PhotoImage(self.image)
-        self.image_label.place(x=0,y=0)"""
-
-        # Open and resize the background image
+        
+    # Background image of our Introduction page
         image1 = Image.open("assets/Libratech_LOGO.png")
         image1 = image1.resize((1300, 700))
         self.background_image1 = ImageTk.PhotoImage(image1)
-        
-        # Create a label to display the background image
+    # Label for our Introduction page background
         self.background_label1= tk.Label(master, image=self.background_image1)
         self.background_label1.place(x=0, y=0, relwidth=1, relheight=1)
-        
-        
- # Label for introduction text
-        
-
-        # Signup Button
+    # Buttons --> login and sign up
         self.signup_button = tk.Button(master, text="Signup", command=self.open_signup_page,font=('Helvetica', 18))
         self.signup_button.place(x=200,y=350)
-
-        # Login Button
         self.login_button = tk.Button(master, text="Login", command=self.open_login_page,font=('Helvetica', 18))
         self.login_button.place(x=400,y=350)
-
+    # Invoking signup page 
     def open_signup_page(self):
         self.master.withdraw()  # Hide the introduction page
         signup_window = tk.Toplevel(self.master)
         signup_page = SignUpPage(signup_window, self.master, self.db, self.cursor)
-
+    #Invoking login page 
     def open_login_page(self):
-        self.master.withdraw()  # Hide the introduction page
+        self.master.withdraw()
         login_window = tk.Toplevel(self.master)
         login_page = LoginPage(login_window)
+
+class SignUpPage:
+    def __init__(self, master, login_master, db, cursor):
+        self.master = master
+        self.login_master = login_master
+        self.db = db
+        self.cursor = cursor
+        master.title("Sign Up")
+        master.geometry("1300x650") 
+        master.resizable(False, False)    
+
+        self.bg_image = tk.PhotoImage(file="assets/login2.png")
+        self.bg_label = tk.Label(master, image=self.bg_image)
+        self.bg_label.place(x=50, y=130)
+
+        self.form_frame = tk.Frame(master, bg="pink", width=500, height=350)
+        self.form_frame.place(x=720, y=130)
+
+        signup_label = tk.Label(master, text="Sign Up Page", font=('Helvetica', 20))
+        signup_label.place(x=550, y=50)
+
+        self.username_label = tk.Label(self.form_frame, text="Student Name:", bg='white', font=('Helvetica', 14))
+        self.username_label.place(x=50, y=50)
+        self.username_entry = tk.Entry(self.form_frame, font=('Helvetica', 14))
+        self.username_entry.place(x=220, y=50)
+
+        self.reg_label = tk.Label(self.form_frame, text="Registration No:", bg='white', font=('Helvetica', 14))
+        self.reg_label.place(x=50, y=100)
+        self.reg_entry = tk.Entry(self.form_frame, font=('Helvetica', 14))
+        self.reg_entry.place(x=220, y=100)
+
+        self.password_label = tk.Label(self.form_frame, text="Password:", bg='white', font=('Helvetica', 14))
+        self.password_label.place(x=50, y=150)
+        self.password_entry = tk.Entry(self.form_frame, show="*", font=('Helvetica', 14))
+        self.password_entry.place(x=220, y=150)
+
+        self.confirm_password_label = tk.Label(self.form_frame, text="Confirm Password:", bg='white', font=('Helvetica', 14))
+        self.confirm_password_label.place(x=50, y=200)
+        self.confirm_password_entry = tk.Entry(self.form_frame, show="*", font=('Helvetica', 14))
+        self.confirm_password_entry.place(x=225, y=200)
+
+        self.signup_button = tk.Button(self.form_frame, text="Sign Up", command=self.signup, bg='white', font=('Helvetica', 14))
+        self.signup_button.place(x=150, y=250)
+
+        self.back_button = tk.Button(master, text="\u2190", command=self.back_to_login, bg='lightblue', font=('Helvetica',20))
+        self.back_button.place(x=50, y=550)
+
+    def signup(self):
+        username = self.username_entry.get()
+        reg_number = self.reg_entry.get()
+        password = self.password_entry.get()
+        confirm_password = self.confirm_password_entry.get()
+
+
+    #validation of registartion number to specify format 
+        if not re.match(r'^[a-zA-Z  ]+$', username):
+            messagebox.showerror("Error", "INVALID Name Format")
+
+        elif not re.match(r'^[1-2]{1}[0-9]{1}[Bb]01[Aa][0-9]{2}[A-Za-z0-9]{1}[0-9]{1}$', reg_number):
+            messagebox.showerror("Error", "Invalid Registration Number Format")
+
+        # Check if the password meets the minimum length requirement
+        elif len(password) < 6:
+            messagebox.showerror("Error", "Password should be at least 6 characters long")
+
+        # Check if the password matches the confirm password
+        elif password != confirm_password:
+            messagebox.showerror("Error", "Passwords do not match")
+
+        else:
+            try:
+        # Inserting data into the database
+                sql = "INSERT INTO userdetails.users (username, registration_number, password) VALUES (%s, %s, %s)"
+                values = (username, reg_number, password)
+                self.cursor.execute(sql, values)
+                self.db.commit()
+                messagebox.showinfo("Sign Up Successful", "User registered successfully!")
+            except mysql.connector.Error as error:
+                messagebox.showerror("Error", f"Failed to register user{error}")
+
+    def back_to_login(self):
+        self.master.destroy()  # Close the sign-up window
+        self.login_master.deiconify()  # Show the login window
+
 
 class LoginPage:
     def __init__(self, master):
         self.master = master
         master.title("Login")
-        master.geometry("1300x700")  # Initial size of the window
+        master.geometry("1300x700") 
         master.resizable(False, False)
         master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
-
         image2 = Image.open("assets/loginbg.png")
         image2 = image2.resize((1300, 700))
         self.background_image2 = ImageTk.PhotoImage(image2)
+        admin_image = Image.open("assets/admin logo.png")
         
-        # Create a label to display the background image
         self.background_label2= tk.Label(master, image=self.background_image2)
         self.background_label2.place(x=0, y=0, relwidth=1, relheight=1)
 
-        # Admin Login Label and Image
         admin_login_label = tk.Label(master, text="Admin Login", font=('Helvetica', 20))
         admin_login_label.place(x=310, y=85)
-
-        admin_image = Image.open("assets/admin logo.png")
         resized_admin_image = admin_image.resize((70, 60), Image.BILINEAR)
         admin_image_tk = ImageTk.PhotoImage(resized_admin_image)
         admin_image_label = tk.Label(master, image=admin_image_tk)
@@ -107,9 +173,10 @@ class LoginPage:
             password="Libratech@24",
             database="userdetails"
         )
+        #Data base access
         self.cursor = self.db.cursor()
 
-        # Student Login Label and Image
+      
         student_login_label = tk.Label(master, text="Student Login", font=('Helvetica', 20))
         student_login_label.place(x=850,y=80)
 
@@ -120,39 +187,33 @@ class LoginPage:
         student_image_label.image = student_image_tk
         student_image_label.place(x=900, y=135)
 
-        # Frame for labels, textboxes, and buttons
         self.form_frame = tk.Frame(master, bg="pink", width=500, height=300)
         self.form_frame.place(x=700, y=210)
 
-        # Username/Registration Number
         self.username_label = tk.Label(self.form_frame, text="Registration No:", bg='white', font=('Helvetica', 14))
         self.username_label.place(x=50, y=50)
         self.username_entry = tk.Entry(self.form_frame, font=('Helvetica', 14))
         self.username_entry.place(x=200, y=50)
 
-        # Password
         self.password_label = tk.Label(self.form_frame, text="Password:", bg='white', font=('Helvetica', 14))
         self.password_label.place(x=50, y=100)
         self.password_entry = tk.Entry(self.form_frame, show="*", font=('Helvetica', 14))
         self.password_entry.place(x=200, y=100)
 
-        # Login Button
         self.login_button = tk.Button(self.form_frame, text="Login", command=self.login, bg='white', font=('Helvetica', 14))
         self.login_button.place(x=150, y=150)
 
-        # Sign Up Button
         self.signup_button = tk.Button(self.form_frame, text="Sign Up", command=self.open_signup_page, bg='white', font=('Helvetica', 14))
         self.signup_button.place(x=250, y=150)
 
         self.back_button = tk.Button(master, text="\u2190 ", command=self.go_to_intro_page, bg='lightblue',font=('Helvetica', 20))
         self.back_button.place(x=50, y=550)
     
-
     def login(self):
         registration_number = self.username_entry.get()
         password = self.password_entry.get()
 
-        # Check if the user exists in the database
+        # login validation
         sql = "SELECT * FROM users WHERE registration_number = %s AND password = %s"
         values = (registration_number, password)
         self.cursor.execute(sql, values)
@@ -161,9 +222,9 @@ class LoginPage:
         if user:
             messagebox.showinfo("Login Successful", "Welcome!")
             self.username = user[1]  # Save the username for later use
-            self.username_entry.delete(0, 'end')  # Clear username entry
+            self.username_entry.delete(0, 'end') 
             self.password_entry.delete(0, 'end') 
-            self.open_library_page(registration_number)  # Pass the registration_number to open_library_page
+            self.open_library_page(registration_number)  
         else:
             messagebox.showerror("Login Failed", "Invalid Credentials of user")
 
@@ -171,7 +232,7 @@ class LoginPage:
         admin_id = self.admin_id_entry.get().lower()
         admin_password = self.admin_password_entry.get()
 
-        # Check if the admin credentials are correct
+        # Check if the admin credentials are correct(static)
         if admin_id == "librarian" and admin_password == "svecw":
             messagebox.showinfo("Admin Login Successful", "Welcome Admin!")
             self.admin_id_entry.delete(0, 'end')  # Clear admin ID entry
@@ -179,9 +240,6 @@ class LoginPage:
             self.open_admin_page()
         else:
             messagebox.showerror("Admin Login Failed", "Invalid Admin Credentials")
-
-
- 
     def open_signup_page(self):
         self.master.withdraw()  
         signup_window = tk.Toplevel(self.master)
@@ -191,304 +249,20 @@ class LoginPage:
         self.master.withdraw() 
         library_window = tk.Toplevel(self.master)
         library_page = LibraryPage(library_window, self.master, self.db, self.cursor, registration_number)
-          # Destroy the login page upon successful login
+         
     def open_admin_page(self):
         self.master.withdraw()  
         admin_window = tk.Toplevel(self.master)
-        admin_page = AdminPage(admin_window, self.db, self.cursor)
-          # Destroy the login page upon successful admin login
+        admin_page = AdminPage(admin_window,self.master, self.db, self.cursor)
+          
         self.db.reconnect()
         self.cursor = self.db.cursor()
         self.cursor_reserved_books = self.db.cursor()
 
     def go_to_intro_page(self):
-        self.master.withdraw()  # Hide the current login page
-            # Show the introduction page (replace "IntroPage" with your actual class name)
+        self.master.withdraw() 
         intro_window = tk.Toplevel(self.master)
         intro_page = IntroductionPage(intro_window,self.db,self.cursor) 
-
-class AdminPage:
-    def __init__(self, master, db, cursor):
-        self.master = master
-        self.db = db
-        self.cursor = cursor
-        self.db_reserved_books = mysql.connector.connect(
-            host="localhost",
-            user="root",  
-            password="Libratech@24",  
-            database="reserved_books"
-        )
-        self.cursor_reserved_books = self.db_reserved_books.cursor()
-
-        master.title("Admin Page")
-        master.geometry("1300x650")
-        master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
-        master.resizable(False, False)
-
-        image = Image.open("assets/admin3.png")
-        image = image.resize((1350,650))
-        
-        self.background_image = ImageTk.PhotoImage(image)
-        self.background_label = tk.Label(master, image=self.background_image)
-        self.background_label.place(x=0, y=0, relwidth=1, relheight=1)
-
-        # Define button styles
-        button_style = {
-            "font": ("Helvetica", 12),
-            "bg": "lightblue",
-            "fg": "black",
-            "width": 20,
-            "height": 2,
-            "bd": 0,
-        }
-
-        # Button to update available books
-        self.update_books_button = tk.Button(master, text="Update Available Books", command=self.update_available_books, **button_style)
-        self.update_books_button.place(x=300, y=120)
-
-        self.update_dataset_button = tk.Button(master, text="Update Dataset Books", command=self.update_books_dataset, **button_style)
-        self.update_dataset_button.place(x=300, y=180)
-
-        self.show_requests_button = tk.Button(master, text="Show Requests", command=self.show_requests, **button_style)
-        self.show_requests_button.place(x=300, y=240)
-
-    def update_available_books(self):
-        book_info = self.prompt_input("Enter Book and Author Name (separated by comma):")
-        if book_info:
-            book_name, author_name = book_info.split(',')
-            self.insert_into_available_books(book_name.strip(), author_name.strip())
-
-    def insert_into_available_books(self, book_name, author_name):
-        try:
-            sql = "INSERT INTO availablebooks.availablebooks (book, author) VALUES (%s, %s)"
-            values = (book_name, author_name)
-            self.cursor.execute(sql, values)
-            self.db.commit()
-            
-        except mysql.connector.Error as err:
-            print("Error:", err)
-
-    def update_books_dataset(self):
-        book_info = self.prompt_input("Enter Book Details (Book, Author):")
-        if book_info:
-            book, author = book_info.split(',')
-            self.insert_into_books_dataset(book.strip(), author.strip())
-
-    def insert_into_books_dataset(self, book_name, author_name):
-        try:
-            sql = "INSERT INTO books_dataset.books_dataset (book, author) VALUES (%s, %s)"
-            values = (book_name, author_name)
-            self.cursor.execute(sql, values)
-            self.db.commit()
-          
-        except mysql.connector.Error as err:
-            print("Error:", err)
-
-    def prompt_input(self, prompt):
-        book_info = simpledialog.askstring("Input", prompt)
-        return book_info
-
-    def show_requests(self):
-        try:
-            # Fetch reserved books data
-            reserved_books_data = self.refresh_reserved_books()
-            self.cursor_reserved_books.execute("SELECT * FROM reserved_books.reserved_books")
-            reserved_books_data = self.cursor_reserved_books.fetchall()
-            # Create a new tkinter window to display requests
-            requests_window = tk.Toplevel(self.master)
-            requests_page = RequestsPage(requests_window, reserved_books_data)
-                
-        except mysql.connector.Error as err:
-            # Handle any errors that occur during database query
-            messagebox.showerror("Error", f"An error occurred: {err}")
-
-    def refresh_reserved_books(self):
-        try:
-            # Execute a query to fetch all records from the reserved books table
-            self.cursor.execute("SELECT * FROM reserved_books.reserved_books")
-            
-            # Fetch all rows from the result set
-            reserved_books_data = self.cursor.fetchall()
-            
-            return reserved_books_data
-
-        except mysql.connector.Error as error:
-            print("Error refreshing reserved books:", error)
-class RequestsPage:
-    def __init__(self, master, reserved_books_data):
-        self.master = master
-        self.reserved_books_data = reserved_books_data
-
-        master.title("Requests")
-        master.geometry("1300x700")  # Initial size of the window
-        master.resizable(False, False)
-        master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
-
-        # Create a frame to contain the requests
-        self.frame = tk.Frame(master)
-        self.frame.pack()
-
-        # Display requests
-        self.display_requests()
-
-    def display_requests(self):
-        # Display each request in a single line with a "Done" button
-        for request in self.reserved_books_data:
-            request_frame = tk.Frame(self.frame)
-            request_frame.pack(pady=5, fill="x")
-
-            # Display request information (registration number, book, author) in a single line
-            request_info = f"Registration Number: {request[0]}, Book: {request[1]}, Author: {request[2]}"
-            request_label = tk.Label(request_frame, text=request_info)
-            request_label.pack(side="left")
-
-            # Create "Done" button for each request
-            done_button = tk.Button(request_frame, text="Done", command=lambda req=request: self.mark_as_done(req))
-            done_button.pack(side="right")
-
-    def mark_as_done(self, request):
-        try:
-            # Connect to the database
-            db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="Libratech@24",
-            database="reserved_books")
-            cursor = db.cursor()
-
-            # Delete the row from the database
-            sql = "DELETE FROM reserved_books.reserved_books WHERE regdno = %s AND book = %s AND author = %s"
-            values = (request[0], request[1], request[2])
-            cursor.execute(sql, values)
-            db.commit()
-            
-            # Close the database connection
-            cursor.close()
-            db.close()
-
-            # Remove the request from GUI
-            self.remove_request_from_gui(request)
-
-        except mysql.connector.Error as error:
-            print("Error:", error)
-    def display_requests(self):
-        # Display each request in a single line with a "Done" button
-        for request in self.reserved_books_data:
-            request_frame = tk.Frame(self.frame)
-            request_frame.pack(pady=5, fill="x")
-
-            # Display request information (registration number, book, author) in a single line
-            request_info = f"Registration Number: {request[0]}, Book: {request[1]}, Author: {request[2]}"
-            request_label = tk.Label(request_frame, text=request_info)
-            request_label.pack(side="left")
-
-            # Create "Done" button for each request
-            done_button = tk.Button(request_frame, text="Done", command=lambda req=request: self.mark_as_done(req))
-            done_button.pack(side="right")
-
-    def remove_request_from_gui(self, request):
-        # Remove the request from GUI
-        for widget in self.frame.winfo_children():
-            request_info = f"Registration Number: {request[0]}, Book: {request[1]}, Author: {request[2]}"
-            if widget.winfo_class() == "Frame" and widget.winfo_children()[0]["text"] == request_info:
-                widget.destroy()
-                break
-
-
-class SignUpPage:
-    def __init__(self, master, login_master, db, cursor):
-        self.master = master
-        self.login_master = login_master
-        self.db = db
-        self.cursor = cursor
-        master.title("Sign Up")
-        master.geometry("1300x650") 
-        master.resizable(False, False)
-        master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
-        
-        # Background Image
-        self.bg_image = tk.PhotoImage(file="assets/login2.png")
-        self.bg_label = tk.Label(master, image=self.bg_image)
-        self.bg_label.place(x=50, y=130)
-
-        # Frame for labels, textboxes, and buttons
-        self.form_frame = tk.Frame(master, bg="pink", width=500, height=350)
-        self.form_frame.place(x=720, y=130)
-
-        signup_label = tk.Label(master, text="Sign Up Page", font=('Helvetica', 20))
-        signup_label.place(x=550, y=50)
-
-        # Username
-        self.username_label = tk.Label(self.form_frame, text="Student Name:", bg='white', font=('Helvetica', 14))
-        self.username_label.place(x=50, y=50)
-        self.username_entry = tk.Entry(self.form_frame, font=('Helvetica', 14))
-        self.username_entry.place(x=220, y=50)
-
-        # Registration Number
-        self.reg_label = tk.Label(self.form_frame, text="Registration No:", bg='white', font=('Helvetica', 14))
-        self.reg_label.place(x=50, y=100)
-        self.reg_entry = tk.Entry(self.form_frame, font=('Helvetica', 14))
-        self.reg_entry.place(x=220, y=100)
-
-        # Password
-        self.password_label = tk.Label(self.form_frame, text="Password:", bg='white', font=('Helvetica', 14))
-        self.password_label.place(x=50, y=150)
-        self.password_entry = tk.Entry(self.form_frame, show="*", font=('Helvetica', 14))
-        self.password_entry.place(x=220, y=150)
-
-        # Confirm Password
-        self.confirm_password_label = tk.Label(self.form_frame, text="Confirm Password:", bg='white', font=('Helvetica', 14))
-        self.confirm_password_label.place(x=50, y=200)
-        self.confirm_password_entry = tk.Entry(self.form_frame, show="*", font=('Helvetica', 14))
-        self.confirm_password_entry.place(x=225, y=200)
-
-        # Sign Up Button
-        self.signup_button = tk.Button(self.form_frame, text="Sign Up", command=self.signup, bg='white', font=('Helvetica', 14))
-        self.signup_button.place(x=150, y=250)
-
-        # Back to Login Button
-        self.back_button = tk.Button(master, text="\u2190", command=self.back_to_login, bg='lightblue', font=('Helvetica',20))
-        self.back_button.place(x=50, y=550)
-
-    def signup(self):
-        username = self.username_entry.get()
-        reg_number = self.reg_entry.get()
-        password = self.password_entry.get()
-        confirm_password = self.confirm_password_entry.get()
-
-        # Check if the registration number matches the format
-                # Check if the registration number matches the format
-        username = self.username_entry.get()
-
-# Check if the username contains only alphabets (letters) and not digits
-        if not re.match(r'^[a-zA-Z]+$', username):
-            messagebox.showerror("Error", "INVALID Name Format")
-
-        elif not re.match(r'^[1-2]{1}[0-9]{1}[Bb]01[Aa][0-9]{2}[A-Za-z0-9]{1}[0-9]{1}$', reg_number):
-            messagebox.showerror("Error", "Invalid Registration Number Format")
-
-        # Check if the password meets the minimum length requirement
-        elif len(password) < 6:
-            messagebox.showerror("Error", "Password should be at least 6 characters long")
-
-        # Check if the password matches the confirm password
-        elif password != confirm_password:
-            messagebox.showerror("Error", "Passwords do not match")
-
-        else:
-            try:
-                # Inserting data into the database
-                sql = "INSERT INTO userdetails.users (username, registration_number, password) VALUES (%s, %s, %s)"
-                values = (username, reg_number, password)
-                self.cursor.execute(sql, values)
-                self.db.commit()
-                messagebox.showinfo("Sign Up Successful", "User registered successfully!")
-            except mysql.connector.Error as error:
-                messagebox.showerror("Error", f"Failed to register user{error}")
-
-    def back_to_login(self):
-        self.master.destroy()  # Close the sign-up window
-        self.login_master.deiconify()  # Show the login window
 
 class LibraryPage:
     def __init__(self, master, login_master, db, cursor, registration_number):
@@ -498,41 +272,34 @@ class LibraryPage:
         self.cursor = cursor
         self.regdno = registration_number
         self.profile_visible = False
-
-
-        master.title("Library")
+        master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
         master.geometry("1300x700")
         master.resizable(False, False)
-        master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
-        
-        # Open and resize the background image
+
+        master.title("Library")
         image = Image.open("assets/bookbg.png")
         image = image.resize((1300, 700))
         self.background_image = ImageTk.PhotoImage(image)
         
-        # Create a label to display the background image
         self.background_label = tk.Label(master, image=self.background_image)
         self.background_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-        # Profile button
         self.profile_image = Image.open("assets/Userlogo.png")
         self.profile_image = self.profile_image.resize((50, 50), Image.BILINEAR)  # Resize the image
         self.profile_image = ImageTk.PhotoImage(self.profile_image)
         self.profile_button = tk.Button(master, image=self.profile_image, command=self.show_profile_frame)
         self.profile_button.place(x=1200, y=30)
 
-        # Initialize database connections for availablebooks and books_dataset
         self.label_book_name = tk.Label(master, text="Enter Book Name:", font=("Helvetica", 15), bg="gold")
         self.label_book_name.place(x=450, y=150)
         self.entry_book_name = tk.Entry(master, font=("Helvetica", 15))
         self.entry_book_name.place(x=650, y=150)
 
-        # Check Availability Button
         self.check_button = tk.Button(master, text="Check Availability", command=self.check_availability, font=("Helvetica", 15))
         self.check_button.place(x=550, y=220)
 
         
-        # Initialize database connections for availablebooks and books_dataset
+        # database connections
         self.db_availablebooks = mysql.connector.connect(
             host="localhost",
             user="root",  
@@ -549,7 +316,7 @@ class LibraryPage:
         )
         self.cursor_books_dataset = self.db_books_dataset.cursor()
 
-        # Initialize database connection for reserved_books
+        # Initialize database connection for requested_books
         self.db_reserved_books = mysql.connector.connect(
             host="localhost",
             user="root",  
@@ -558,32 +325,9 @@ class LibraryPage:
         )
         self.cursor_reserved_books = self.db_reserved_books.cursor()
 
-        # Destroy reserved_books database connection when the window is closed
+        # Destroy reserved_books database connection when the window is closed as that database being updated
         master.protocol("WM_DELETE_WINDOW", self.close_connection)
-
-    
-
-    def view_requests(self):
-        try:
-            # Fetch requests made by the user with the given registration number
-            sql = "SELECT * FROM reserved_books.reserved_books WHERE regdno = %s"
-            self.cursor_reserved_books.execute(sql, (self.regdno,))
-            requests = self.cursor_reserved_books.fetchall()
-
-            # Display requests in a message box
-            if requests:
-                request_details = "\n".join([f"Book: {row[1]}, Author: {row[2]}" for row in requests])
-                messagebox.showinfo("My Requests", f"Your requests:\n{request_details}")
-            else:
-                messagebox.showinfo("My Requests", "You have not made any requests yet.")
-        except mysql.connector.Error as error:
-            messagebox.showerror("Error", f"Failed to fetch requests: {error}")
-
-    def close_connection(self):
-        # Close the connection to the reserved_books database
-        self.cursor_reserved_books.close()
-        self.db_reserved_books.close()
-        self.master.destroy()
+        
 
     def check_availability(self):
         book = self.entry_book_name.get().lower()
@@ -610,6 +354,22 @@ class LibraryPage:
                     messagebox.showinfo("Request Status", "BOOK not requested.")
             else:
                 messagebox.showinfo("Book Availability", "Book does not exist.")
+    def view_requests(self):
+        try:
+            # Fetch requests made by the user with the given registration number
+            sql = "SELECT * FROM reserved_books.reserved_books WHERE regdno = %s"
+            self.cursor_reserved_books.execute(sql, (self.regdno,))
+            requests = self.cursor_reserved_books.fetchall()
+
+            # Display requests in a message box
+            if requests:
+                request_details = "\n".join([f"Book: {row[1]}, Author: {row[2]}" for row in requests])
+                messagebox.showinfo("My Requests", f"Your requests:\n{request_details}")
+            else:
+                messagebox.showinfo("My Requests", "You have not made any requests yet.")
+        except mysql.connector.Error as error:
+            messagebox.showerror("Error", f"Failed to fetch requests: {error}")
+
 
 
     def request_book(self, book):
@@ -639,7 +399,7 @@ class LibraryPage:
                 values = (self.regdno, book, author)
                 cursor_reserved_books.execute(sql_insert_reserved, values)
                 db_reserved_books.commit()
-                messagebox.showinfo("Request Status", f"Your request for '{book}' has been sent. Book registered successfully!")
+                messagebox.showinfo("Request Status", f"Your request for '{book}' has been sent. Please login back within two days to check for its availability")
             except mysql.connector.Error as error:
                 messagebox.showerror("Error", f"Failed to request book: {error}")
         else:
@@ -704,12 +464,244 @@ class LibraryPage:
             self.user_details_label.config(text=details_text)
         else:
             messagebox.showinfo("User Details", "User details not found.")
+    def close_connection(self):
+        # Close the connection to the reserved_books database
+        self.cursor_reserved_books.close()
+        self.db_reserved_books.close()
+        self.master.destroy()
     def go_back_to_login(self):
     # Close the library window
         self.master.destroy()  
         # Show the login window
         self.login_master.deiconify() 
+    
+class AdminPage:
+    def __init__(self, master, login_master,db, cursor):
+        self.master = master
+        self.db = db
+        self.cursor = cursor
+        self.login_master=login_master
+        self.db_reserved_books = mysql.connector.connect(
+            host="localhost",
+            user="root",  
+            password="Libratech@24",  
+            database="reserved_books"
+        )
+        self.cursor_reserved_books = self.db_reserved_books.cursor()
+
+        master.title("Admin Page")
+        master.geometry("1300x650")
+        master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
+        master.resizable(False, False)
+
+        image = Image.open("assets/admin3.png")
+        image = image.resize((1350,650))
         
+        self.background_image = ImageTk.PhotoImage(image)
+        self.background_label = tk.Label(master, image=self.background_image)
+        self.background_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+        # Define button styles
+        button_style = {
+            "font": ("Helvetica", 12),
+            "bg": "lightblue",
+            "fg": "black",
+            "width": 20,
+            "height": 2,
+            "bd": 0,
+        }
+
+        # Button to update available books
+        self.update_books_button = tk.Button(master, text="Update Available Books", command=self.update_available_books, **button_style)
+        self.update_books_button.place(x=300, y=120)
+
+        self.update_dataset_button = tk.Button(master, text="Update Dataset Books", command=self.update_books_dataset, **button_style)
+        self.update_dataset_button.place(x=300, y=180)
+
+        self.show_requests_button = tk.Button(master, text="Show Requests", command=self.show_requests, **button_style)
+        self.show_requests_button.place(x=300, y=240)
+
+        self.back_button = tk.Button(master, text="\u2190", command=self.back_to_login, bg='lightblue', font=('Helvetica',20))
+        self.back_button.place(x=50, y=550)
+
+    def update_available_books(self):
+        book_info = self.prompt_input("Enter Book and Author Name (separated by comma):")
+        if book_info:
+            book_name, author_name = book_info.split(',')
+            self.insert_into_available_books(book_name.strip(), author_name.strip())
+
+    def insert_into_available_books(self, book_name, author_name):
+        try:
+            sql = "INSERT INTO availablebooks.availablebooks (book, author) VALUES (%s, %s)"
+            values = (book_name, author_name)
+            self.cursor.execute(sql, values)
+            self.db.commit()
+            
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+    def update_books_dataset(self):
+        book_info = self.prompt_input("Enter Book Details (Book, Author):")
+        if book_info:
+            book, author = book_info.split(',')
+            self.insert_into_books_dataset(book.strip(), author.strip())
+
+    def insert_into_books_dataset(self, book_name, author_name):
+        try:
+            sql = "INSERT INTO books_dataset.books_dataset (book, author) VALUES (%s, %s)"
+            values = (book_name, author_name)
+            self.cursor.execute(sql, values)
+            self.db.commit()
+          
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+    def prompt_input(self, prompt):
+        book_info = simpledialog.askstring("Input", prompt)
+        return book_info
+
+    def show_requests(self):
+
+        try:
+            # Fetch reserved books data
+            reserved_books_data = self.refresh_reserved_books()
+            self.cursor_reserved_books.execute("SELECT * FROM reserved_books.reserved_books")
+            reserved_books_data = self.cursor_reserved_books.fetchall()
+            # Create a new tkinter window to display requests
+            requests_window = tk.Toplevel(self.master)
+            requests_page = RequestsPage(requests_window, reserved_books_data)
+                
+        except mysql.connector.Error as err:
+            # Handle any errors that occur during database query
+            messagebox.showerror("Error", f"An error occurred: {err}")
+
+    def refresh_reserved_books(self):
+        try:
+            # Execute a query to fetch all records from the reserved books table
+            self.cursor.execute("SELECT * FROM reserved_books.reserved_books")
+            
+            # Fetch all rows from the result set
+            reserved_books_data = self.cursor.fetchall()
+            
+            return reserved_books_data
+
+        except mysql.connector.Error as error:
+            print("Error refreshing reserved books:", error)
+
+    def back_to_login(self):
+        # Close the current admin page window
+        self.master.destroy()
+        self.login_master.deiconify() 
+
+class RequestsPage:
+    def __init__(self, master, reserved_books_data):
+        self.master = master
+        self.reserved_books_data = reserved_books_data
+
+        master.title("Requests")
+        master.geometry("1300x700")  # Initial size of the window
+        master.resizable(False, False)
+        master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
+        
+        self.back_button = tk.Button(master, text="\u2190", command=self.go_back, bg='lightblue', font=('Helvetica',20))
+        self.back_button.place(x=50, y=550)
+
+        # Create a frame to contain the requests
+        self.frame = tk.Frame(master)
+        self.frame.pack()
+        image = Image.open("assets/admin3.png")
+        image = image.resize((1350,650))
+        
+       
+        # Display requests
+        self.display_requests()
+
+
+    def display_requests(self):
+        # Display each request in a single line with a "Done" button
+        for request in self.reserved_books_data:
+            request_frame = tk.Frame(self.frame)
+            request_frame.pack(pady=7, fill="x")
+           
+            # Display request information (registration number, book, author) in a single line
+            request_info = f"Registration Number: {request[0]}, Book: {request[1]}, Author: {request[2]}"
+            request_label = tk.Label(request_frame, text=request_info)
+            request_label.pack(side="left")
+
+            # Create "Done" button for each request
+            done_button = tk.Button(request_frame, text="Done", command=lambda req=request: self.mark_as_done(req))
+            done_button.pack(side="right")
+
+    def mark_as_done(self, request):
+        try:
+            # Connect to the database
+            db = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Libratech@24",
+                database="reserved_books")
+            cursor = db.cursor()
+
+            # Delete the row from the database
+            sql = "DELETE FROM reserved_books.reserved_books WHERE regdno = %s AND book = %s AND author = %s"
+            values = (request[0], request[1], request[2])
+            cursor.execute(sql, values)
+            db.commit()
+            
+            # Update available_books database
+            self.update_available_books(request[1], request[2])
+
+            # Close the database connection
+            cursor.close()
+            db.close()
+
+            # Remove the request from GUI
+            self.remove_request_from_gui(request)
+
+            library_page = self.master.library_page
+            library_page.notify_user(request[0], request[1])
+
+
+        except mysql.connector.Error as error:
+            print("Error:", error)
+
+    def update_available_books(self, book, author):
+        try:
+            # Connect to the database
+            db = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Libratech@24",
+                database="availablebooks")
+            cursor = db.cursor()
+
+            # Insert the book and author into available_books
+            sql = "INSERT INTO availablebooks.availablebooks (book, author) VALUES (%s, %s)"
+            values = (book, author)
+            cursor.execute(sql, values)
+            db.commit()
+
+            # Close the database connection
+            cursor.close()
+            db.close()
+
+        except mysql.connector.Error as error:
+            print("Error:", error)
+
+    def remove_request_from_gui(self, request):
+        # Remove the request from GUI
+        for widget in self.frame.winfo_children():
+            request_info = f"Registration Number: {request[0]}, Book: {request[1]}, Author: {request[2]}"
+            if widget.winfo_class() == "Frame" and widget.winfo_children()[0]["text"] == request_info:
+                widget.destroy()
+                break
+    def go_back(self):
+        # Destroy the current requests page window and deiconify the admin page window
+        self.master.destroy()
+        self.admin_page.master.deiconify()
+
+
+
 
 def main():
     db = mysql.connector.connect(
@@ -717,10 +709,14 @@ def main():
     user="root",
     password="Libratech@24",
     )
-    root = tk.Tk()  # Create the main application window
+    root = tk.Tk() 
+    root.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
+    root.geometry("1300x700")
+    root.resizable(False, False)
     cursor = db.cursor()
-    app = IntroductionPage(root, db, cursor) # Initialize the IntroductionPage
+    app = IntroductionPage(root, db, cursor) 
     root.mainloop()  # Start the Tkinter event loop
 
 if __name__ == "__main__":
     main()
+
