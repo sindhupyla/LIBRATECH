@@ -47,7 +47,8 @@ class SignUpPage:
         self.cursor = cursor
         master.title("Sign Up")
         master.geometry("1300x650") 
-        master.resizable(False, False)    
+        master.resizable(False, False)
+        master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")    
 
         self.bg_image = tk.PhotoImage(file="assets/login2.png")
         self.bg_label = tk.Label(master, image=self.bg_image)
@@ -132,6 +133,7 @@ class LoginPage:
         master.iconbitmap("assets/Iconsmind-Outline-Library-2.ico")
         image2 = Image.open("assets/loginbg.png")
         image2 = image2.resize((1300, 700))
+        
         self.background_image2 = ImageTk.PhotoImage(image2)
         admin_image = Image.open("assets/admin logo.png")
         
@@ -629,7 +631,7 @@ class RequestsPage:
             request_label = tk.Label(request_frame, text=request_info)
             request_label.pack(side="left")
             # Create "Done" button for each request
-            done_button = tk.Button(request_frame, text="Done", command=lambda req=request: self.mark_as_done(req))
+            done_button = tk.Button(request_frame, text="Available", command=lambda req=request: self.mark_as_done(req))
             done_button.pack(side="right")
 
     def mark_as_done(self, request):
@@ -699,9 +701,6 @@ class RequestsPage:
         # Destroy the current requests page window and deiconify the admin page window
         self.master.destroy()
         self.admin_page.master.deiconify()
-
-
-
 
 def main():
     db = mysql.connector.connect(
